@@ -1,0 +1,78 @@
+import random
+
+# Function to print the state of the piles
+def print_piles(pile1, pile2):
+    print(f"Pile 1: {pile1} coins")
+    print(f"Pile 2: {pile2} coins")
+    print("-" * 20)
+
+# Function to check if the game is over (both piles are empty)
+def is_game_over(pile1, pile2):
+    return pile1 == 0 and pile2 == 0
+
+# Easy AI move: makes a random valid move
+def easy_ai_move(pile1, pile2):
+    # Randomly choose a pile and remove a random number of coins
+    if pile1 > 0 and pile2 > 0:
+        pile_choice = random.choice([1, 2])
+    elif pile1 > 0:
+        pile_choice = 1
+    else:
+        pile_choice = 2
+
+    if pile_choice == 1:
+        num_coins = random.randint(1, pile1)
+        pile1 -= num_coins
+    else:
+        num_coins = random.randint(1, pile2)
+        pile2 -= num_coins
+
+    return pile1, pile2
+
+# Alpha-Beta Pruning: Evaluates moves and chooses the optimal one
+def alpha_beta(pile1, pile2, depth, alpha, beta, maximizing_player):
+    if is_game_over(pile1, pile2) or depth == 0:
+        return pile1, pile2, evaluate(pile1, pile2)
+
+    if maximizing_player:  # AI's turn
+        max_eval = float('-inf')
+        best_move = (pile1, pile2)
+        # Try all possible moves for the AI
+        for i in range(1, pile1 + 1):
+            new_pile1 = pile1 - i
+            eval_move = alpha_beta(new_pile1, pile2, depth - 1, alpha, beta, False)[2]
+            if eval_move > max_eval:
+                max_eval = eval_move
+                best_move = (new_pile1, pile2)
+            alpha = max(alpha, eval_move)
+            if beta <= alpha:
+                break
+        for i in range(1, pile2 + 1):
+            new_pile2 = pile2 - i
+            eval_move = alpha_beta(pile1, new_pile2, depth - 1, alpha, beta, False)[2]
+            if eval_move > max_eval:
+                max_eval = eval_move
+                best_move = (pile1, new_pile2)
+            alpha = max(alpha, eval_move)
+            if beta <= alpha:
+                break
+        return best_move[0], best_move[1], max_eval
+    else:  # Player's turn
+        min_eval = float('inf')
+        best_move = (pile1, pile2)
+        for i in range(1, pile1 + 1):
+            new_pile1 = pile1 - i
+            eval_move = alpha_beta(new_pile1, pile2, depth - 1, alpha, beta, True)[2]
+            if eval_move < min_eval:
+                min_eval = eval_move
+                best_move = (new_pile1, pile2)
+            beta = min(beta, eval_move)
+            if beta <= alpha:
+                break
+        for i in range(1, pile2 + 1):
+            new_pile2 = pile2 - i
+            eval_move = alpha_beta(pile1, new_pile2, depth - 1, alpha, beta, True)[2]
+            if eval_move < min_eval:
+                min_eval = eval_move
+                best_move = (pile1, new_pile2)
+            beta = min(beta, eval_move)
